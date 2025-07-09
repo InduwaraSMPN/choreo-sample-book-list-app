@@ -8,6 +8,7 @@ endpoints:
     type: REST
     networkVisibilities:
       - Public
-    auth:
-      required: true
-      type: choreo-managed
+dependencies:
+  connectionReferences:
+    - name: Reading List Connection
+      resourceRef: service:/sample-project/reading-list-service/v1/d709e/PUBLIC

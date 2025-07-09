@@ -54,13 +54,9 @@ export default function App() {
       setUser(userInfo);
     } else {
       console.log("User is not signed in");
-      // For Choreo managed authentication, redirect to login if not authenticated
-      // Check if we're not already on a login/auth page to avoid redirect loops
-      if (!window.location.pathname.includes('/auth/') && !window.location.search.includes('code=')) {
-        console.log("Redirecting to login...");
-        window.location.href = '/auth/login';
-        return;
-      }
+      // For connection-based authentication, we'll try to make API calls anyway
+      // Choreo should handle authentication transparently
+      setSignedIn(true); // Assume signed in for connection-based auth
     }
     setIsAuthLoading(false);
   }, []);
@@ -78,38 +74,32 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // Load books when component mounts
     getReadingList();
-  }, [signedIn]);
+  }, []);
 
   async function getReadingList() {
-    if (signedIn) {
-      setIsLoading(true);
-      console.log("Attempting to fetch books...");
-      console.log("User signed in:", signedIn);
-      console.log("User info:", user);
+    setIsLoading(true);
+    console.log("Attempting to fetch books...");
+    console.log("API URL from config:", window?.configs?.apiUrl);
 
-      getBooks()
-        .then((res) => {
-          console.log("Books fetched successfully:", res.data);
-          const grouped = groupBy(res.data, (item) => item.status);
-          setReadList(grouped);
-          setIsLoading(false);
-        })
-        .catch((e) => {
-          console.error("Error fetching books:", e);
-          setIsLoading(false);
-
-          // If it's a 403 error, the user might not be properly authenticated
-          if (e.response?.status === 403) {
-            console.log("403 error - clearing auth state and redirecting to login");
-            setSignedIn(false);
-            setUser(null);
-            sessionStorage.removeItem("userInfo");
-          }
+    getBooks()
+      .then((res) => {
+        console.log("Books fetched successfully:", res.data);
+        const grouped = groupBy(res.data, (item) => item.status);
+        setReadList(grouped);
+        setIsLoading(false);
+      })
+      .catch((e) => {
+        console.error("Error fetching books:", e);
+        console.error("Error details:", {
+          status: e.response?.status,
+          statusText: e.response?.statusText,
+          data: e.response?.data,
+          headers: e.response?.headers
         });
-    } else {
-      console.log("User not signed in, skipping book fetch");
-    }
+        setIsLoading(false);
+      });
   }
 
   useEffect(() => {

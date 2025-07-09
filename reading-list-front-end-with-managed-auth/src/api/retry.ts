@@ -20,10 +20,10 @@ import axios, { AxiosRequestConfig } from 'axios';
 
 export const performRequestWithRetry = async (url: string, options: AxiosRequestConfig<any> | undefined) => {
 
-  // For Choreo managed authentication, we need to ensure credentials are included
+  // For Choreo connections, requests should include credentials and proper headers
   const requestOptions = {
     ...options,
-    withCredentials: true, // This ensures cookies are sent with the request
+    withCredentials: true, // Include cookies for authentication
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
@@ -31,41 +31,20 @@ export const performRequestWithRetry = async (url: string, options: AxiosRequest
   };
 
   try {
+    console.log('Making request to:', url);
+    console.log('Request options:', requestOptions);
+
     const response = await axios(url, requestOptions);
+    console.log('Request successful:', response.status);
     return response;
   } catch (error) {
+    console.error('Request failed:', error.response?.status, error.response?.data);
+
     if (error.response && error.response.status === 401) {
-      // Access token may be expired. Try to refresh the tokens.
-      try {
-        await axios.post('/auth/refresh', {}, { withCredentials: true });
-        // Token refresh successful. Retry the API call.
-        const retryResponse = await axios(url, requestOptions);
-        return retryResponse;
-      } catch (refreshError) {
-        if (refreshError.response && refreshError.response.status === 401) {
-          // Session has expired (i.e., Refresh token has also expired).
-          // Redirect to the login page
-          console.log('Failed to refresh token. Status: ' + refreshError.response.status);
-          window.location.href = '/auth/login';
-        } else {
-          // We can't refresh the token due to a server error.
-          // Hence just throw the original 401 error from the API.
-          throw error;
-        }
-      }
+      console.log('Authentication failed (401). Check your connection configuration.');
+      throw error;
     } else if (error.response && error.response.status === 403) {
-      // Forbidden - likely authentication issue
-      console.error('Access forbidden. Please check your authentication configuration.');
-      console.error('Response:', error.response);
-
-      // For managed auth, clear any stored auth data and redirect to login
-      sessionStorage.removeItem("userInfo");
-
-      // Check if we're not already on a login/auth page to avoid redirect loops
-      if (!window.location.pathname.includes('/auth/') && !window.location.search.includes('code=')) {
-        console.log("Redirecting to login due to 403 error...");
-        window.location.href = '/auth/login';
-      }
+      console.error('Access forbidden (403). Check your service permissions and connection setup.');
       throw error;
     } else {
       console.error('API Error:', error.response?.status, error.response?.data);
