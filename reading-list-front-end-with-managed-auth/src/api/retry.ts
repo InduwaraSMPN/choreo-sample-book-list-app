@@ -15,12 +15,19 @@
 // under the License.
 
 import axios, { AxiosRequestConfig, AxiosError } from "axios";
+import { oauthClient } from "./oauth-client";
 
 export const performRequestWithRetry = async (
   url: string,
   options: AxiosRequestConfig | undefined
 ) => {
-  // For Choreo connections, requests should include credentials and proper headers
+  // Check if OAuth2 client is configured for service connections
+  if (oauthClient.isConfigured()) {
+    console.warn("Using OAuth2 client for authenticated request");
+    return await oauthClient.makeAuthenticatedRequest(url, options);
+  }
+
+  // Fallback to cookie-based authentication for managed auth
   const requestOptions = {
     ...options,
     withCredentials: true, // Include cookies for authentication

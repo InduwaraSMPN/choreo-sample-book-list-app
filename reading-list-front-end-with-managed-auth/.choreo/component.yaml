@@ -12,3 +12,9 @@ dependencies:
   connectionReferences:
     - name: Reading List Connection
       resourceRef: service:/sample-project/reading-list-service/v1/d709e/PUBLIC
+      environmentVariables:
+        - name: SERVICEURL
+        - name: CONSUMERKEY
+        - name: CONSUMERSECRET
+        - name: TOKENURL
+        - name: CHOREOAPIKEY

@@ -66,9 +66,18 @@ export default function App() {
         setUser(userInfo);
       } else {
         console.warn("User is not signed in");
-        // For connection-based authentication, we'll try to make API calls anyway
-        // Choreo should handle authentication transparently
-        setSignedIn(true); // Assume signed in for connection-based auth
+        // Check if we have OAuth2 service connection configuration
+        const hasOAuthConfig = !!(window.ENV?.CONSUMERKEY && window.ENV?.CONSUMERSECRET);
+        console.warn("OAuth2 service connection configured:", hasOAuthConfig);
+
+        if (hasOAuthConfig) {
+          // For connection-based authentication, we'll try to make API calls anyway
+          // Choreo should handle authentication transparently
+          setSignedIn(true); // Assume signed in for connection-based auth
+        } else {
+          // No OAuth config and no user session - user needs to sign in
+          setSignedIn(false);
+        }
       }
     }
     setIsAuthLoading(false);
@@ -141,7 +150,20 @@ export default function App() {
 
       // Show user-friendly error message
       if (error.response?.status === 401) {
-        toast.error("Authentication required. Please log in.");
+        console.error("Authentication failed (401). Check your connection configuration.");
+
+        // Check OAuth2 configuration
+        const hasOAuthConfig = !!(window.ENV?.CONSUMERKEY && window.ENV?.CONSUMERSECRET);
+        if (!hasOAuthConfig) {
+          console.error("OAuth2 credentials not configured. Required environment variables:");
+          console.error("- CONSUMERKEY:", !!window.ENV?.CONSUMERKEY);
+          console.error("- CONSUMERSECRET:", !!window.ENV?.CONSUMERSECRET);
+          console.error("- TOKENURL:", window.ENV?.TOKENURL || "default");
+          console.error("- CHOREOAPIKEY:", !!window.ENV?.CHOREOAPIKEY);
+          toast.error("OAuth2 credentials not configured. Please check your Choreo connection setup.");
+        } else {
+          toast.error("Authentication failed. Please check your OAuth2 configuration.");
+        }
       } else if (error.response?.status === 403) {
         toast.error("Access denied. Check your permissions.");
       } else if (error.response?.status && error.response.status >= 500) {

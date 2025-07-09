@@ -19,6 +19,13 @@ declare global {
     configs: {
       apiUrl: string;
     };
+    ENV?: {
+      SERVICEURL?: string;
+      CONSUMERKEY?: string;
+      CONSUMERSECRET?: string;
+      TOKENURL?: string;
+      CHOREOAPIKEY?: string;
+    };
   }
 }
 
