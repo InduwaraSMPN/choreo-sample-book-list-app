@@ -121,6 +121,13 @@ paths:
           description: Healthy response
 
 components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://sts.choreo.dev/oauth2/token
+          scopes: {}
   schemas:
     Key:
       type: object
@@ -154,3 +161,6 @@ components:
       type: array
       items:
         type: string
+
+security:
+  - OAuth2: []

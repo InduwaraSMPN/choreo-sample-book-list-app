@@ -10,3 +10,7 @@ endpoints:
         - Project
         - Public
       schemaFilePath: openapi.yaml
+      auth:
+        required: true
+        type: oauth2
+        provider: choreo
