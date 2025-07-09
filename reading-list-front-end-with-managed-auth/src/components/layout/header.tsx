@@ -1,6 +1,6 @@
 // React import not needed with new JSX transform
 import Cookies from "js-cookie";
-import { BookOpen, LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ThemeToggleCompact } from "@/components/ui/theme-toggle";
@@ -25,17 +25,10 @@ export function Header({ user, onMenuToggle, isMobileMenuOpen }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo and Brand */}
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <BookOpen className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              {user?.org_name || "Reading List"}
-            </span>
-          </div>
-        </div>
+        <div className="flex items-center space-x-4"></div>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-4">
