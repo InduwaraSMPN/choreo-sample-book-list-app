@@ -1,0 +1,10 @@
+schemaVersion: "1.2"
+endpoints:
+  - name: reading-list-frontend
+    displayName: Reading List Frontend
+    service:
+      basePath: /
+      port: 80
+    type: WEB
+    networkVisibilities:
+      - Public

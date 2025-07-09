@@ -20,16 +20,26 @@ import axios, { AxiosRequestConfig } from 'axios';
 
 export const performRequestWithRetry = async (url: string, options: AxiosRequestConfig<any> | undefined) => {
 
+  // For Choreo managed authentication, we need to ensure credentials are included
+  const requestOptions = {
+    ...options,
+    withCredentials: true, // This ensures cookies are sent with the request
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    }
+  };
+
   try {
-    const response = await axios(url, options);
+    const response = await axios(url, requestOptions);
     return response;
   } catch (error) {
     if (error.response && error.response.status === 401) {
       // Access token may be expired. Try to refresh the tokens.
       try {
-        await axios.post('/auth/refresh');
+        await axios.post('/auth/refresh', {}, { withCredentials: true });
         // Token refresh successful. Retry the API call.
-        const retryResponse = await axios(url, options);
+        const retryResponse = await axios(url, requestOptions);
         return retryResponse;
       } catch (refreshError) {
         if (refreshError.response && refreshError.response.status === 401) {
@@ -43,6 +53,12 @@ export const performRequestWithRetry = async (url: string, options: AxiosRequest
           throw error;
         }
       }
+    } else if (error.response && error.response.status === 403) {
+      // Forbidden - likely authentication issue
+      console.error('Access forbidden. Please check your authentication configuration.');
+      // For managed auth, redirect to login
+      window.location.href = '/auth/login';
+      throw error;
     } else {
       throw error;
     }
