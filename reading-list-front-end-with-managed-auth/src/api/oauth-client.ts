@@ -33,11 +33,11 @@ class OAuth2Client {
 
   constructor() {
     // These environment variables will be injected by Choreo at runtime
-    this.serviceUrl = (window as any).ENV?.SERVICEURL || process.env.SERVICEURL || "";
-    this.consumerKey = (window as any).ENV?.CONSUMERKEY || process.env.CONSUMERKEY || "";
-    this.consumerSecret = (window as any).ENV?.CONSUMERSECRET || process.env.CONSUMERSECRET || "";
-    this.tokenUrl = (window as any).ENV?.TOKENURL || process.env.TOKENURL || "https://sts.choreo.dev/oauth2/token";
-    this.choreoApiKey = (window as any).ENV?.CHOREOAPIKEY || process.env.CHOREOAPIKEY || "";
+    this.serviceUrl = (window as any).ENV?.SERVICEURL || "";
+    this.consumerKey = (window as any).ENV?.CONSUMERKEY || "";
+    this.consumerSecret = (window as any).ENV?.CONSUMERSECRET || "";
+    this.tokenUrl = (window as any).ENV?.TOKENURL || "https://sts.choreo.dev/oauth2/token";
+    this.choreoApiKey = (window as any).ENV?.CHOREOAPIKEY || "";
 
     console.log("OAuth2Client initialized with:", {
       serviceUrl: this.serviceUrl,
