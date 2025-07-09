@@ -118,22 +118,34 @@ export default function App() {
       const res = await getBooks();
       console.warn("Books fetched successfully:", res.data);
 
-      // Validate that we received an array of books
-      if (Array.isArray(res.data)) {
-        const validBooks = res.data.filter(
-          book => book && typeof book === "object" && book.title && book.author
-        );
+      // Handle both array and object response formats
+      let books: Book[] = [];
 
-        if (validBooks.length > 0) {
-          const grouped = groupBy(validBooks, item => item.status || "to_read");
-          setReadList(grouped);
-        } else {
-          console.warn("No valid books found in response");
-          setReadList({});
-        }
+      if (Array.isArray(res.data)) {
+        // If response is already an array, use it directly
+        books = res.data;
+      } else if (res.data && typeof res.data === "object") {
+        // If response is an object (UUID -> book mapping), convert to array
+        books = Object.values(res.data) as Book[];
+        console.warn("Converted object response to array:", books.length, "books");
       } else {
-        console.error("API response is not an array:", res.data);
+        console.error("API response is neither array nor object:", res.data);
         toast.error("Invalid response format from server");
+        setReadList({});
+        return;
+      }
+
+      // Filter valid books
+      const validBooks = books.filter(
+        book => book && typeof book === "object" && book.title && book.author
+      );
+
+      if (validBooks.length > 0) {
+        const grouped = groupBy(validBooks, item => item.status || "to_read");
+        setReadList(grouped);
+        console.warn("Successfully grouped books:", Object.keys(grouped));
+      } else {
+        console.warn("No valid books found in response");
         setReadList({});
       }
     } catch (e) {

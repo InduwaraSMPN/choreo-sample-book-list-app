@@ -27,5 +27,6 @@ export async function getBooks() {
   };
 
   const response = await performRequestWithRetry(`${apiUrl}/books`, options);
-  return response as AxiosResponse<Book[]>;
+  // Backend returns an object with UUID keys, not an array
+  return response as AxiosResponse<Book[] | Record<string, Book>>;
 }
