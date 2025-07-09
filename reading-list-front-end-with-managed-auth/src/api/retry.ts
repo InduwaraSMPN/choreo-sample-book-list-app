@@ -56,10 +56,19 @@ export const performRequestWithRetry = async (url: string, options: AxiosRequest
     } else if (error.response && error.response.status === 403) {
       // Forbidden - likely authentication issue
       console.error('Access forbidden. Please check your authentication configuration.');
-      // For managed auth, redirect to login
-      window.location.href = '/auth/login';
+      console.error('Response:', error.response);
+
+      // For managed auth, clear any stored auth data and redirect to login
+      sessionStorage.removeItem("userInfo");
+
+      // Check if we're not already on a login/auth page to avoid redirect loops
+      if (!window.location.pathname.includes('/auth/') && !window.location.search.includes('code=')) {
+        console.log("Redirecting to login due to 403 error...");
+        window.location.href = '/auth/login';
+      }
       throw error;
     } else {
+      console.error('API Error:', error.response?.status, error.response?.data);
       throw error;
     }
   }

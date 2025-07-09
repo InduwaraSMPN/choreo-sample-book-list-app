@@ -5,6 +5,9 @@ endpoints:
     service:
       basePath: /
       port: 80
-    type: WEB
+    type: REST
     networkVisibilities:
       - Public
+    auth:
+      required: true
+      type: choreo-managed
