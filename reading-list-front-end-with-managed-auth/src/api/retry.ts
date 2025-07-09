@@ -14,40 +14,41 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import axios, { AxiosRequestConfig, AxiosError } from "axios";
 
-import axios, { AxiosRequestConfig } from 'axios';
-
-
-export const performRequestWithRetry = async (url: string, options: AxiosRequestConfig<any> | undefined) => {
-
+export const performRequestWithRetry = async (
+  url: string,
+  options: AxiosRequestConfig | undefined
+) => {
   // For Choreo connections, requests should include credentials and proper headers
   const requestOptions = {
     ...options,
     withCredentials: true, // Include cookies for authentication
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options?.headers,
-    }
+    },
   };
 
   try {
-    console.log('Making request to:', url);
-    console.log('Request options:', requestOptions);
+    console.warn("Making request to:", url);
+    console.warn("Request options:", requestOptions);
 
     const response = await axios(url, requestOptions);
-    console.log('Request successful:', response.status);
+    console.warn("Request successful:", response.status);
     return response;
   } catch (error) {
-    console.error('Request failed:', error.response?.status, error.response?.data);
+    const axiosError = error as AxiosError;
+    console.error("Request failed:", axiosError.response?.status, axiosError.response?.data);
 
-    if (error.response && error.response.status === 401) {
-      console.log('Authentication failed (401). Check your connection configuration.');
+    if (axiosError.response && axiosError.response.status === 401) {
+      console.warn("Authentication failed (401). Check your connection configuration.");
       throw error;
-    } else if (error.response && error.response.status === 403) {
-      console.error('Access forbidden (403). Check your service permissions and connection setup.');
+    } else if (axiosError.response && axiosError.response.status === 403) {
+      console.error("Access forbidden (403). Check your service permissions and connection setup.");
       throw error;
     } else {
-      console.error('API Error:', error.response?.status, error.response?.data);
+      console.error("API Error:", axiosError.response?.status, axiosError.response?.data);
       throw error;
     }
   }

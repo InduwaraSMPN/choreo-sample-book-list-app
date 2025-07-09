@@ -1,7 +1,1 @@
-#root {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-image: linear-gradient(to right, #36d1dc, #5b86e5);
-}
+/* Modern app styles are now handled by Tailwind CSS and the design system */

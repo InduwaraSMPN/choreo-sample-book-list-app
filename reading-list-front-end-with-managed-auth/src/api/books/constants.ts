@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-
 declare global {
   interface Window {
     configs: {

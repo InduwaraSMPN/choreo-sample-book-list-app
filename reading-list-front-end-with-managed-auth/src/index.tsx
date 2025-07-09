@@ -14,17 +14,27 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import Cookies from 'js-cookie';
-import React, { useEffect, useState } from "react";
-import { Tab } from "@headlessui/react";
-import { getBooks } from "./api/books/get-books";
-import { Book } from "./api/books/types/book";
-import groupBy from "lodash/groupBy";
-import AddItem from "./components/modal/fragments/add-item";
-import { deleteBooks } from "./api/books/delete-books";
+import Cookies from "js-cookie";
 import { Dictionary } from "lodash";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { toast } from 'react-toastify';
+import groupBy from "lodash/groupBy";
+import { useEffect, useState, lazy, Suspense } from "react";
+import { toast } from "react-toastify";
+
+import { deleteBooks } from "@/api/books/delete-books";
+import { getBooks } from "@/api/books/get-books";
+import { Book } from "@/api/books/types/book";
+import { BookList } from "@/components/book/book-list";
+import { MainLayout } from "@/components/layout/main-layout";
+import { Button } from "@/components/ui/button";
+
+interface User {
+  email?: string;
+  sub?: string;
+  org_name?: string;
+}
+
+// Lazy load the AddItem modal for better performance
+const AddItem = lazy(() => import("@/components/modal/fragments/add-item"));
 
 export function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -36,40 +46,49 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    if (Cookies.get('userinfo')) {
+    const userInfoCookie = Cookies.get("userinfo");
+    if (userInfoCookie) {
       // We are here after a login
-      const userInfoCookie = Cookies.get('userinfo')
       sessionStorage.setItem("userInfo", userInfoCookie);
-      Cookies.remove('userinfo');
-      var userInfo = JSON.parse(atob(userInfoCookie));
-      setSignedIn(true);
-      setUser(userInfo);
-    } else if (sessionStorage.getItem("userInfo")) {
-      // We have already logged in
-      var userInfo = JSON.parse(atob(sessionStorage.getItem("userInfo")!));
+      Cookies.remove("userinfo");
+      const userInfo = JSON.parse(atob(userInfoCookie));
       setSignedIn(true);
       setUser(userInfo);
     } else {
-      console.log("User is not signed in");
-      // For connection-based authentication, we'll try to make API calls anyway
-      // Choreo should handle authentication transparently
-      setSignedIn(true); // Assume signed in for connection-based auth
+      const storedUserInfo = sessionStorage.getItem("userInfo");
+      if (storedUserInfo) {
+        // We have already logged in
+        const userInfo = JSON.parse(atob(storedUserInfo));
+        setSignedIn(true);
+        setUser(userInfo);
+      } else {
+        console.warn("User is not signed in");
+        // For connection-based authentication, we'll try to make API calls anyway
+        // Choreo should handle authentication transparently
+        setSignedIn(true); // Assume signed in for connection-based auth
+      }
     }
     setIsAuthLoading(false);
   }, []);
 
   useEffect(() => {
     // Handle errors from Managed Authentication
-    const errorCode = new URLSearchParams(window.location.search).get('code');
-    const errorMessage = new URLSearchParams(window.location.search).get('message');
+    const errorCode = new URLSearchParams(window.location.search).get("code");
+    const errorMessage = new URLSearchParams(window.location.search).get("message");
     if (errorCode) {
-      toast.error(<>
-        <p className="text-[16px] font-bold text-slate-800">Something went wrong !</p>
-        <p className="text-[13px] text-slate-400 mt-1">Error Code : {errorCode}<br />Error Description: {errorMessage}</p>
-      </>);    
+      toast.error(
+        <>
+          <p className="text-[16px] font-bold text-slate-800">Something went wrong !</p>
+          <p className="text-[13px] text-slate-400 mt-1">
+            Error Code : {errorCode}
+            <br />
+            Error Description: {errorMessage}
+          </p>
+        </>
+      );
     }
   }, []);
 
@@ -80,26 +99,61 @@ export default function App() {
 
   async function getReadingList() {
     setIsLoading(true);
-    console.log("Attempting to fetch books...");
-    console.log("API URL from config:", window?.configs?.apiUrl);
+    console.warn("Attempting to fetch books...");
+    console.warn(
+      "API URL from config:",
+      (window as { configs?: { apiUrl?: string } })?.configs?.apiUrl
+    );
 
-    getBooks()
-      .then((res) => {
-        console.log("Books fetched successfully:", res.data);
-        const grouped = groupBy(res.data, (item) => item.status);
-        setReadList(grouped);
-        setIsLoading(false);
-      })
-      .catch((e) => {
-        console.error("Error fetching books:", e);
-        console.error("Error details:", {
-          status: e.response?.status,
-          statusText: e.response?.statusText,
-          data: e.response?.data,
-          headers: e.response?.headers
-        });
-        setIsLoading(false);
+    try {
+      const res = await getBooks();
+      console.warn("Books fetched successfully:", res.data);
+
+      // Validate that we received an array of books
+      if (Array.isArray(res.data)) {
+        const validBooks = res.data.filter(
+          book => book && typeof book === "object" && book.title && book.author
+        );
+
+        if (validBooks.length > 0) {
+          const grouped = groupBy(validBooks, item => item.status || "to_read");
+          setReadList(grouped);
+        } else {
+          console.warn("No valid books found in response");
+          setReadList({});
+        }
+      } else {
+        console.error("API response is not an array:", res.data);
+        toast.error("Invalid response format from server");
+        setReadList({});
+      }
+    } catch (e) {
+      const error = e as {
+        response?: { status?: number; statusText?: string; data?: unknown; headers?: unknown };
+      };
+      console.error("Error fetching books:", error);
+      console.error("Error details:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
       });
+
+      // Show user-friendly error message
+      if (error.response?.status === 401) {
+        toast.error("Authentication required. Please log in.");
+      } else if (error.response?.status === 403) {
+        toast.error("Access denied. Check your permissions.");
+      } else if (error.response?.status && error.response.status >= 500) {
+        toast.error("Server error. Please try again later.");
+      } else {
+        toast.error("Failed to load books. Please check your connection.");
+      }
+
+      setReadList({});
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -109,150 +163,61 @@ export default function App() {
   }, [isAddItemOpen]);
 
   const handleDelete = async (id: string) => {
-    setIsLoading(true);
-    await deleteBooks(id);
-    getReadingList();
-    setIsLoading(false);
+    try {
+      await deleteBooks(id);
+      toast.success("Book deleted successfully!");
+      getReadingList();
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      toast.error("Failed to delete book. Please try again.");
+    }
   };
 
   if (isAuthLoading) {
-    return <div className="animate-spin h-5 w-5 text-white">.</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!signedIn) {
     return (
-      <button
-        className="float-right bg-black bg-opacity-20 p-2 rounded-md text-sm my-3 font-medium text-white"
-        onClick={() => { window.location.href = "/auth/login" }}
-      >
-        Login
-      </button>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="text-center space-y-6 max-w-md mx-auto p-6">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold">Welcome to Reading List</h1>
+            <p className="text-muted-foreground">Please sign in to manage your books</p>
+          </div>
+          <Button
+            onClick={() => {
+              window.location.href = "/auth/login";
+            }}
+            size="lg"
+            className="w-full"
+          >
+            Sign In
+          </Button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="header-2 w-screen h-screen overflow-hidden">
-      <nav className="bg-white py-2 md:py-2">
-        <div className="container px-4 mx-auto md:flex md:items-center">
-          <div className="flex justify-between items-center">
-            {user && (
-              <a href="#" className="font-bold text-xl text-[#36d1dc]">
-                {user?.org_name}
-              </a>
-            )}
-            <button
-              className="border border-solid border-gray-600 px-3 py-1 rounded text-gray-600 opacity-50 hover:opacity-75 md:hidden"
-              id="navbar-toggle"
-            >
-              <i className="fas fa-bars"></i>
-            </button>
-          </div>
-
-          <div
-            className="hidden md:flex flex-col md:flex-row md:ml-auto mt-3 md:mt-0"
-            id="navbar-collapse"
-          >
-            <button
-              className="float-right bg-[#5b86e5] p-2 rounded-md text-sm my-3 font-medium text-white"
-              onClick={() => {
-                sessionStorage.removeItem("userInfo");
-                window.location.href = `/auth/logout?session_hint=${Cookies.get('session_hint')}`;
-              }}
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <div className="py-3 md:py-6">
-        <div className="container px-4 mx-auto flex justify-center">
-          <div className="w-full max-w-lg px-2 py-16 sm:px-0 mb-20">
-            <div className="flex justify-between">
-              <p className="text-4xl text-white mb-3 font-bold">Reading List</p>
-              <div className="container w-auto">
-                <button
-                  className="float-right bg-black bg-opacity-20 p-2 rounded-md text-sm my-3 font-medium text-white h-10"
-                  onClick={() => setIsAddItemOpen(true)}
-                >
-                  + Add New
-                </button>
-                <button
-                  className="float-right bg-black bg-opacity-20 p-2 rounded-md text-sm my-3 font-medium text-white w-10 h-10 mr-1"
-                  onClick={() => getReadingList()}
-                >
-                  <ArrowPathIcon />
-                </button>
-              </div>
-            </div>
-            {readList && (
-              <Tab.Group>
-                <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
-                  {Object.keys(readList).map((val) => (
-                    <Tab
-                      key={val}
-                      className={({ selected }) =>
-                        classNames(
-                          "w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-blue-700",
-                          "ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2",
-                          selected
-                            ? "bg-white shadow"
-                            : "text-blue-100 hover:bg-white/[0.12] hover:text-white"
-                        )
-                      }
-                    >
-                      {val}
-                    </Tab>
-                  ))}
-                </Tab.List>
-                <Tab.Panels className="mt-2">
-                  {Object.values(readList).map((books: Book[], idx) => (
-                    <Tab.Panel
-                      key={idx}
-                      className={
-                        isLoading
-                          ? classNames(
-                            "rounded-xl bg-white p-3 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2 animate-pulse"
-                          )
-                          : classNames(
-                            "rounded-xl bg-white p-3 ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2"
-                          )
-                      }
-                    >
-                      <ul>
-                        {books.map((book) => (
-                          <div className="flex justify-between">
-                            <li
-                              key={book.uuid}
-                              className="relative rounded-md p-3"
-                            >
-                              <h3 className="text-sm font-medium leading-5">
-                                {book.title}
-                              </h3>
-
-                              <ul className="mt-1 flex space-x-1 text-xs font-normal leading-4 text-gray-500">
-                                <li>{book.author}</li>
-                                <li>&middot;</li>
-                              </ul>
-                            </li>
-                            <button
-                              className="float-right bg-red-500 text-white rounded-md self-center text-xs p-2 mr-2"
-                              onClick={() => handleDelete(book.uuid!)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        ))}
-                      </ul>
-                    </Tab.Panel>
-                  ))}
-                </Tab.Panels>
-              </Tab.Group>
-            )}
-            <AddItem isOpen={isAddItemOpen} setIsOpen={setIsAddItemOpen} />
-          </div>
-        </div>
-      </div>
-    </div>
+    <MainLayout user={user || undefined}>
+      <BookList
+        books={readList}
+        onAddBook={() => setIsAddItemOpen(true)}
+        onRefresh={getReadingList}
+        onDeleteBook={handleDelete}
+        isLoading={isLoading}
+      />
+      <Suspense fallback={null}>
+        <AddItem isOpen={isAddItemOpen} setIsOpen={setIsAddItemOpen} />
+      </Suspense>
+    </MainLayout>
   );
 }

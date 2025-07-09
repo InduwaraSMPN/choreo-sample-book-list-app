@@ -14,15 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import { performRequestWithRetry } from "../retry";
 
 import { apiUrl } from "./constants";
 import { Book } from "./types/book";
-import { performRequestWithRetry } from "../retry";
 
 export async function postBooks(payload?: Book) {
-
   const options = {
-    method: 'POST',
+    method: "POST",
     data: payload,
   };
 

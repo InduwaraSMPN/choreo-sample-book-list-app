@@ -14,15 +14,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-
 import { AxiosResponse } from "axios";
-import { apiUrl } from "./constants";
-import { Book } from "./types/book";
+
 import { performRequestWithRetry } from "../retry";
 
+import { apiUrl } from "./constants";
+import { Book } from "./types/book";
+
 export async function getBooks() {
- const options = {
-    method: 'GET',
+  const options = {
+    method: "GET",
   };
 
   const response = await performRequestWithRetry(`${apiUrl}/books`, options);

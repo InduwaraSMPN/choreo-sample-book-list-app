@@ -14,9 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-
 import { Transition, Dialog } from "@headlessui/react";
-import React, { Fragment, ReactFragment } from "react";
+import React, { Fragment } from "react";
+
 import { classNames } from "../..";
 
 interface ModalProps {
@@ -29,16 +29,11 @@ interface ModalProps {
 }
 
 export default function Modal(props: ModalProps) {
-  const { isOpen, setIsOpen, title, children, handleSubmit, isDisabled } =
-    props;
+  const { isOpen, setIsOpen, title, children, handleSubmit, isDisabled } = props;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog
-        as="div"
-        className="relative z-10"
-        onClose={() => setIsOpen(false)}
-      >
+      <Dialog as="div" className="relative z-10" onClose={() => setIsOpen(false)}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -63,10 +58,7 @@ export default function Modal(props: ModalProps) {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title
-                  as="h3"
-                  className="text-lg font-medium leading-6 text-gray-900"
-                >
+                <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
                   {title}
                 </Dialog.Title>
                 {children}

@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-
 export interface Book {
   uuid?: string;
   title: string;

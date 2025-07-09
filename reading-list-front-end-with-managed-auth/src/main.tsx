@@ -16,15 +16,34 @@
 
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { ToastContainer } from "react-toastify";
+
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { ThemeProvider } from "@/lib/theme-context";
+
 import App from ".";
-import { ToastContainer } from 'react-toastify';
 import "./App.css";
 import "./index.css";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <>
-    <App />
-    <ToastContainer />
-  </>
+  <React.StrictMode>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <App />
+        <ToastContainer
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+        />
+      </ThemeProvider>
+    </ErrorBoundary>
+  </React.StrictMode>
 );

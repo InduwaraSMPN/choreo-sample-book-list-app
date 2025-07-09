@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {

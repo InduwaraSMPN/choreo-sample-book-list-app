@@ -14,14 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-
-import { apiUrl } from "./constants";
 import { performRequestWithRetry } from "../retry";
 
+import { apiUrl } from "./constants";
 
 export async function deleteBooks(id: string) {
- const options = {
-    method: 'DELETE',
+  const options = {
+    method: "DELETE",
   };
 
   const response = await performRequestWithRetry(`${apiUrl}/books/${id}`, options);
