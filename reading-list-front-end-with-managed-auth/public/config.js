@@ -10,7 +10,7 @@ window.ENV = window.ENV || {
   CONSUMERKEY: "",
   CONSUMERSECRET: "",
   TOKENURL: "https://sts.choreo.dev/oauth2/token",
-  CHOREOAPIKEY: ""
+  CHOREOAPIKEY: "",
 };
 
 // Debug: Log the current configuration
@@ -19,5 +19,5 @@ console.log("OAuth2 Configuration:", {
   consumerKey: window.ENV.CONSUMERKEY ? "***" : "not set",
   consumerSecret: window.ENV.CONSUMERSECRET ? "***" : "not set",
   tokenUrl: window.ENV.TOKENURL,
-  choreoApiKey: window.ENV.CHOREOAPIKEY ? "***" : "not set"
+  choreoApiKey: window.ENV.CHOREOAPIKEY ? "***" : "not set",
 });

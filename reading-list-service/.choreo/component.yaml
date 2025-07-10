@@ -14,3 +14,7 @@ endpoints:
         required: true
         type: oauth2
         provider: choreo
+dependencies:
+  connectionReferences:
+    - name: Database Connection
+      resourceRef: database:MySQLDatabase/BOOKS_DB

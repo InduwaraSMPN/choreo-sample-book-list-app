@@ -172,7 +172,9 @@ export default function App() {
           console.error("- CONSUMERSECRET:", !!window.ENV?.CONSUMERSECRET);
           console.error("- TOKENURL:", window.ENV?.TOKENURL || "default");
           console.error("- CHOREOAPIKEY:", !!window.ENV?.CHOREOAPIKEY);
-          toast.error("OAuth2 credentials not configured. Please check your Choreo connection setup.");
+          toast.error(
+            "OAuth2 credentials not configured. Please check your Choreo connection setup."
+          );
         } else {
           toast.error("Authentication failed. Please check your OAuth2 configuration.");
         }

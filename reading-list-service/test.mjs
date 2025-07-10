@@ -1,11 +1,47 @@
 import chai from "chai";
 import chaiHttp from "chai-http";
 import app from "./app.mjs";
+import database from "./database.mjs";
 
 chai.use(chaiHttp);
 const expect = chai.expect;
 
 describe("Reading List API", () => {
+  // Setup database connection before running tests
+  before(async function() {
+    this.timeout(10000); // Increase timeout for database connection
+    try {
+      await database.connect();
+      console.log('Database connected for testing');
+    } catch (error) {
+      console.error('Failed to connect to database for testing:', error);
+      throw error;
+    }
+  });
+
+  // Clean up database connection after tests
+  after(async function() {
+    try {
+      await database.close();
+      console.log('Database connection closed after testing');
+    } catch (error) {
+      console.error('Error closing database connection:', error);
+    }
+  });
+
+  // Clean up test data before each test
+  beforeEach(async function() {
+    this.timeout(5000);
+    try {
+      // Clear all books from the test database
+      const books = await database.getAllBooks();
+      for (const uuid in books) {
+        await database.deleteBook(uuid);
+      }
+    } catch (error) {
+      console.error('Error cleaning up test data:', error);
+    }
+  });
   describe("POST /reading-list/books", () => {
     it("should add a book to the reading list", async () => {
       const newBook = {

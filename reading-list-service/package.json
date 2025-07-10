@@ -1,17 +1,19 @@
 {
   "name": "nodejs-sample-rest-api",
   "version": "1.0.0",
-  "description": "A sample nodejs REST API - in-memory cache",
+  "description": "A sample nodejs REST API with MySQL database",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node index.mjs",
-    "test": "mocha test.mjs"
+    "test": "mocha test.mjs",
+    "test-db": "node test-db-connection.mjs"
   },
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
     "express": "^4.18.1",
+    "mysql2": "^3.14.1",
     "node-cache": "^5.1.2",
     "uuid": "^9.0.0"
   },

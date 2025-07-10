@@ -33,18 +33,23 @@ class OAuth2Client {
 
   constructor() {
     // These environment variables will be injected by Choreo at runtime
-    this.serviceUrl = (window as any).ENV?.SERVICEURL || "";
-    this.consumerKey = (window as any).ENV?.CONSUMERKEY || "";
-    this.consumerSecret = (window as any).ENV?.CONSUMERSECRET || "";
-    this.tokenUrl = (window as any).ENV?.TOKENURL || "https://sts.choreo.dev/oauth2/token";
-    this.choreoApiKey = (window as any).ENV?.CHOREOAPIKEY || "";
+    this.serviceUrl = (window as unknown as { ENV?: Record<string, string> }).ENV?.SERVICEURL || "";
+    this.consumerKey =
+      (window as unknown as { ENV?: Record<string, string> }).ENV?.CONSUMERKEY || "";
+    this.consumerSecret =
+      (window as unknown as { ENV?: Record<string, string> }).ENV?.CONSUMERSECRET || "";
+    this.tokenUrl =
+      (window as unknown as { ENV?: Record<string, string> }).ENV?.TOKENURL ||
+      "https://sts.choreo.dev/oauth2/token";
+    this.choreoApiKey =
+      (window as unknown as { ENV?: Record<string, string> }).ENV?.CHOREOAPIKEY || "";
 
-    console.log("OAuth2Client initialized with:", {
+    console.warn("OAuth2Client initialized with:", {
       serviceUrl: this.serviceUrl,
       consumerKey: this.consumerKey ? "***" : "missing",
       consumerSecret: this.consumerSecret ? "***" : "missing",
       tokenUrl: this.tokenUrl,
-      choreoApiKey: this.choreoApiKey ? "***" : "missing"
+      choreoApiKey: this.choreoApiKey ? "***" : "missing",
     });
   }
 
@@ -56,31 +61,33 @@ class OAuth2Client {
 
     // Check if we have the required credentials
     if (!this.consumerKey || !this.consumerSecret) {
-      throw new Error("OAuth2 credentials not configured. Make sure CONSUMERKEY and CONSUMERSECRET are set.");
+      throw new Error(
+        "OAuth2 credentials not configured. Make sure CONSUMERKEY and CONSUMERSECRET are set."
+      );
     }
 
     try {
-      console.log("Requesting new access token from:", this.tokenUrl);
-      
+      console.warn("Requesting new access token from:", this.tokenUrl);
+
       const credentials = btoa(`${this.consumerKey}:${this.consumerSecret}`);
-      
+
       const response = await axios.post<TokenResponse>(
         this.tokenUrl,
         "grant_type=client_credentials",
         {
           headers: {
-            "Authorization": `Basic ${credentials}`,
+            Authorization: `Basic ${credentials}`,
             "Content-Type": "application/x-www-form-urlencoded",
-            ...(this.choreoApiKey && { "Choreo-API-Key": this.choreoApiKey })
-          }
+            ...(this.choreoApiKey && { "Choreo-API-Key": this.choreoApiKey }),
+          },
         }
       );
 
       this.accessToken = response.data.access_token;
       // Set expiry to 90% of the actual expiry to ensure we refresh before it expires
-      this.tokenExpiry = Date.now() + (response.data.expires_in * 1000 * 0.9);
-      
-      console.log("Access token obtained successfully");
+      this.tokenExpiry = Date.now() + response.data.expires_in * 1000 * 0.9;
+
+      console.warn("Access token obtained successfully");
       return this.accessToken;
     } catch (error) {
       console.error("Failed to obtain access token:", error);
@@ -88,28 +95,28 @@ class OAuth2Client {
     }
   }
 
-  async makeAuthenticatedRequest(url: string, options: AxiosRequestConfig = {}): Promise<any> {
+  async makeAuthenticatedRequest(url: string, options: AxiosRequestConfig = {}): Promise<unknown> {
     try {
       const token = await this.getAccessToken();
-      
+
       const requestOptions: AxiosRequestConfig = {
         ...options,
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
           ...(this.choreoApiKey && { "Choreo-API-Key": this.choreoApiKey }),
           ...options.headers,
         },
       };
 
-      console.log("Making authenticated request to:", url);
-      console.log("Request headers:", {
+      console.warn("Making authenticated request to:", url);
+      console.warn("Request headers:", {
         ...requestOptions.headers,
-        Authorization: "Bearer ***"
+        Authorization: "Bearer ***",
       });
 
       const response = await axios(url, requestOptions);
-      console.log("Request successful:", response.status);
+      console.warn("Request successful:", response.status);
       return response;
     } catch (error) {
       console.error("Authenticated request failed:", error);
