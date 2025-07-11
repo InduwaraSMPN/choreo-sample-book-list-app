@@ -65,7 +65,7 @@ export function Modal({
               <Dialog.Panel
                 ref={focusTrapRef}
                 className={cn(
-                  "w-full transform overflow-hidden rounded-lg bg-background p-6 text-left align-middle shadow-xl transition-all",
+                  "w-full transform overflow-visible rounded-lg bg-background p-6 text-left align-middle shadow-xl transition-all",
                   sizeClasses[size]
                 )}
               >

@@ -174,7 +174,7 @@ export function BookList({ books, onAddBook, onRefresh, onDeleteBook, isLoading 
               <AnimatePresence>
                 {filteredBooks.map(book => (
                   <StaggerItem key={book.uuid}>
-                    <BookCard book={book} onDelete={onDeleteBook} />
+                    <BookCard book={book} onDelete={onDeleteBook} onStatusUpdate={onRefresh} />
                   </StaggerItem>
                 ))}
               </AnimatePresence>

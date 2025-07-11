@@ -1,28 +1,32 @@
 import { motion } from "framer-motion";
 import { Trash2, User, Calendar } from "lucide-react";
 import { useState } from "react";
+import { toast } from "react-toastify";
 
+import { updateBookStatus } from "@/api/books/put-books";
 import { Book } from "@/api/books/types/book";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { cn, formatStatus } from "@/lib/utils";
+import { Select } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface BookCardProps {
   book: Book;
   onDelete: (id: string) => void;
+  onStatusUpdate?: () => void;
   isDeleting?: boolean;
 }
 
-const statusVariants = {
-  to_read: "secondary",
-  reading: "info",
-  read: "success",
-} as const;
+const statusOptions = [
+  { value: "to_read", label: "To Read" },
+  { value: "reading", label: "Currently Reading" },
+  { value: "read", label: "Completed" },
+];
 
-export function BookCard({ book, onDelete, isDeleting }: BookCardProps) {
+export function BookCard({ book, onDelete, onStatusUpdate, isDeleting }: BookCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const handleDeleteClick = () => {
     setShowDeleteDialog(true);
@@ -33,6 +37,24 @@ export function BookCard({ book, onDelete, isDeleting }: BookCardProps) {
       onDelete(book.uuid);
     }
     setShowDeleteDialog(false);
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!book.uuid || newStatus === book.status) return;
+
+    setIsUpdatingStatus(true);
+    try {
+      await updateBookStatus(book.uuid, newStatus);
+      toast.success("Book status updated successfully!");
+      if (onStatusUpdate) {
+        onStatusUpdate();
+      }
+    } catch (error) {
+      console.error("Error updating book status:", error);
+      toast.error("Failed to update book status. Please try again.");
+    } finally {
+      setIsUpdatingStatus(false);
+    }
   };
 
   return (
@@ -50,21 +72,24 @@ export function BookCard({ book, onDelete, isDeleting }: BookCardProps) {
       <Card className="h-full transition-all duration-200 hover:shadow-lg hover:shadow-primary/5 border-border/50">
         <CardContent className="p-6">
           <div className="space-y-3">
-            {/* Status Badge */}
-            <div className="flex items-center justify-between">
-              <Badge
-                variant={statusVariants[book.status as keyof typeof statusVariants] || "secondary"}
-                className="text-xs"
-              >
-                {formatStatus(book.status || "")}
-              </Badge>
+            {/* Status Select and Delete Button */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1">
+                <Select
+                  value={book.status || "to_read"}
+                  onChange={handleStatusChange}
+                  options={statusOptions}
+                  disabled={isUpdatingStatus}
+                  className="text-xs"
+                />
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleDeleteClick}
-                disabled={isDeleting}
+                disabled={isDeleting || isUpdatingStatus}
                 className={cn(
-                  "h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity",
+                  "h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0",
                   "hover:bg-destructive/10 hover:text-destructive"
                 )}
                 aria-label={`Delete ${book.title}`}
